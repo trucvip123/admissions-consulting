@@ -1,0 +1,15 @@
+# OpenAI API Configuration
+# Lấy API key từ: https://platform.openai.com/api-keys
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Google Gemini API Configuration
+# Lấy API key từ: https://aistudio.google.com/app/apikey
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Các cấu hình khác (tùy chọn)
+# MODEL_NAME=gpt-3.5-turbo
+# TEMPERATURE=0.7 
+# EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+# CHUNK_SIZE=1000
+# CHUNK_OVERLAP=200
+# LLM_MODEL=gemini-pro 
