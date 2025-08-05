@@ -132,6 +132,14 @@ def main():
     with st.sidebar:
         st.markdown("### ⚙️ Cài đặt")
 
+        # Tùy chọn Query Expansion
+        st.markdown("#### 🔍 Tùy chọn tìm kiếm")
+        use_query_expansion = st.checkbox(
+            "Mở rộng truy vấn (Query Expansion)",
+            value=True,
+            help="Sử dụng từ đồng nghĩa và context để cải thiện kết quả tìm kiếm"
+        )
+
         # Thống kê
         stats = bot.get_statistics()
         st.markdown("#### 📊 Thống kê")
@@ -140,7 +148,8 @@ def main():
         <div class="stats-card">
             <strong>Vector Store:</strong> {stats['vector_store']['status']}<br>
             <strong>LLM:</strong> {'✅ Có sẵn' if stats['llm_available'] else '❌ Chưa cấu hình'}<br>
-            <strong>Lịch sử chat:</strong> {stats['conversation_history_length']} tin nhắn
+            <strong>Lịch sử chat:</strong> {stats['conversation_history_length']} tin nhắn<br>
+            <strong>Query Expansion:</strong> {'✅ Bật' if use_query_expansion else '❌ Tắt'}
         </div>
         """,
             unsafe_allow_html=True,
@@ -210,7 +219,7 @@ def main():
 
         # Xử lý câu trả lời
         with st.spinner("🤖 Bot đang suy nghĩ..."):
-            response = bot.chat(user_input)
+            response = bot.chat(user_input, use_query_expansion=use_query_expansion)
 
             if response["success"]:
                 bot_response = response["response"]

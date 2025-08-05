@@ -35,8 +35,8 @@ class TuyenSinhBot:
             ]
         )
 
-    def get_relevant_context(self, question: str, k: int = 5) -> str:
-        results = self.vector_store.search(question, k=k)
+    def get_relevant_context(self, question: str, k: int = 5, use_query_expansion: bool = True) -> str:
+        results = self.vector_store.search(question, k=k, use_query_expansion=use_query_expansion)
         if not results:
             return "Không tìm thấy thông tin liên quan trong cơ sở dữ liệu."
         context_parts = []
@@ -70,7 +70,7 @@ Trả lời bằng tiếng Việt:"""
             logger.error(f"Lỗi khi tạo câu trả lời: {str(e)}")
             return f"Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi. Thông tin tìm được:\n\n{context}"
 
-    def chat(self, user_message: str) -> Dict:
+    def chat(self, user_message: str, use_query_expansion: bool = True) -> Dict:
         try:
             logger.info(f"👤 User hỏi: {user_message}")
             self.conversation_history.append({"role": "user", "content": user_message})
@@ -78,7 +78,7 @@ Trả lời bằng tiếng Việt:"""
                 self.conversation_history = self.conversation_history[
                     -Config.MAX_HISTORY * 2 :
                 ]
-            context = self.get_relevant_context(user_message)
+            context = self.get_relevant_context(user_message, use_query_expansion=use_query_expansion)
             response = self.generate_response(user_message, context)
             logger.info(f"🤖 Bot trả lời: {response[:200]}...")
             self.conversation_history.append({"role": "assistant", "content": response})

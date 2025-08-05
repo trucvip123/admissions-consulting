@@ -7,6 +7,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
 from config import Config
 from document_processor import DocumentProcessor
+from query_expander import QueryExpander
 from datetime import datetime
 import hashlib
 import re
@@ -27,6 +28,7 @@ class VectorStore:
             length_function=len,
         )
         self.vector_db = None
+        self.query_expander = QueryExpander()
 
     def create_documents(self, documents: List[Dict]) -> List[Document]:
         """Tạo danh sách Document từ dữ liệu đã xử lý với metadata nâng cao"""
@@ -130,15 +132,34 @@ class VectorStore:
 
         logger.info(f"Đã lưu cơ sở dữ liệu vector tại: {Config.VECTOR_DB_PATH}")
 
-    def search(self, query: str, k: int = 5) -> List[Dict]:
-        """Tìm kiếm thông tin liên quan đến câu hỏi"""
+    def search(self, query: str, k: int = 5, use_query_expansion: bool = True) -> List[Dict]:
+        """Tìm kiếm thông tin liên quan đến câu hỏi với tùy chọn mở rộng truy vấn"""
         if not self.vector_db:
             logger.error("Cơ sở dữ liệu vector chưa được khởi tạo!")
             return []
 
         try:
-            logger.info(f"🔍 Tìm kiếm: '{query}' (k={k})")
-            results = self.vector_db.similarity_search_with_score(query, k=k)
+            logger.info(f"🔍 Tìm kiếm: '{query}' (k={k}, expansion={use_query_expansion})")
+            
+            # Mở rộng truy vấn nếu được bật
+            if use_query_expansion:
+                expanded_queries = self.query_expander.expand_query(query, method="combined")
+                logger.info(f"📈 Sử dụng {len(expanded_queries)} truy vấn mở rộng")
+                
+                # Tìm kiếm với tất cả các truy vấn mở rộng
+                all_results = []
+                for exp_query in expanded_queries:
+                    try:
+                        exp_results = self.vector_db.similarity_search_with_score(exp_query, k=k//2)
+                        all_results.extend(exp_results)
+                    except Exception as e:
+                        logger.warning(f"Lỗi khi tìm kiếm với query '{exp_query}': {e}")
+                
+                # Sắp xếp theo score và lấy top k
+                all_results.sort(key=lambda x: x[1])  # Sắp xếp theo score (thấp hơn = tốt hơn)
+                results = all_results[:k]
+            else:
+                results = self.vector_db.similarity_search_with_score(query, k=k)
 
             formatted_results = []
             for doc, score in results:
